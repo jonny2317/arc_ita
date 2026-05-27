@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gestione Arcieri PRO</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+/* ================= THEME ================= */
+
+:root{
+    --bg:#0f2238;
+    --bg2:#132a46;
+    --card:#1e3a5f;
+    --text:#ffffff;
+    --header:#1f2f44;
+
+    --overlay1:rgba(5,15,30,0.75);
+    --overlay2:rgba(10,20,35,0.75);
+}
+
+body.light{
+    --bg:#e6edf3;
+    --bg2:#ffffff;
+    --card:#f8fafc;
+    --text:#1a202c;
+    --header:#0b3d6d;
+
+    --overlay1:rgba(255,255,255,0.45);
+    --overlay2:rgba(240,248,255,0.45);
+}
+
+body{
+    margin:0;
+    font-family:Segoe UI, sans-serif;
+    color:var(--text);
+    transition:0.3s;
+
+    background:
+    linear-gradient(var(--overlay1), var(--overlay2)),
+    url('https://www.open-farm.it/wp-content/uploads/2020/04/erba-medica-millesimata-cover.jpg');
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+/* ================= HEADER ================= */
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+
+    padding:15px;
+
+    background:var(--header);
+
+    box-shadow:0 2px 10px rgba(0,0,0,0.3);
+}
+
+button{
+    margin:4px;
+    padding:8px 12px;
+
+    border:none;
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    transition:0.2s;
+}
+
+button:hover{
+    transform:scale(1.03);
+}
+
+.yellow{background:#f6ad55}
+.blue{background:#3182ce;color:white}
+.green{background:#2f855a;color:white}
+.red{background:#c53030;color:white}
+
+/* ================= LAYOUT ================= */
+
+.container{
+    max-width:900px;
+    margin:20px auto;
+    padding:10px;
+}
+
+.section{
+    background:rgba(15,34,56,0.88);
+
+    margin-bottom:12px;
+
+    border-radius:10px;
+
+    overflow:hidden;
+
+    backdrop-filter:blur(4px);
+
+    box-shadow:0 4px 10px rgba(0,0,0,0.25);
+}
+
+body.light .section{
+    background:rgba(255,255,255,0.82);
+}
+
+.section-header{
+    padding:12px;
+    cursor:pointer;
+    font-weight:bold;
+    font-size:17px;
+}
+
+.section-content{
+    display:none;
+    padding:12px;
+    background:rgba(255,255,255,0.04);
+}
+
+body.light .section-content{
+    background:rgba(255,255,255,0.35);
+}
+
+.section.open .section-content{
+    display:block;
+}
+
+.card{
+    background:var(--card);
+
+    padding:10px;
+    margin:6px 0;
+
+    border-radius:8px;
+}
+
+input,
+select{
+    padding:8px;
+    margin:5px 0;
+
+    border-radius:6px;
+    border:1px solid #ccc;
+
+    width:100%;
+    max-width:250px;
+
+    box-sizing:border-box;
+}
+
+canvas{
+    background:white;
+    border-radius:10px;
+    padding:10px;
+}
+
+/* ================= MODAL ================= */
+
+.modal{
+    display:none;
+
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,0.6);
+
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content{
+    background:white;
+    color:black;
+
+    padding:20px;
+
+    border-radius:10px;
+
+    max-height:80%;
+    overflow:auto;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+
+<div class="header">
+
+    <h2>🏹 Gestione Arcieri</h2>
+
+    <div>
+        <button id="themeBtn" class="yellow" onclick="toggleTheme()">🌙 Scuro</button>
+
+        <button class="blue" onclick="classificaGlobale()">🌐 Classifica</button>
+
+        <button class="green" onclick="esporta()">💾</button>
+
+        <button class="green" onclick="importa()">📂</button>
+
+        <button class="red" onclick="resetDati()">🗑</button>
+    </div>
+
+</div>
+
+<div class="container">
+
+<!-- ================= NUOVA GARA ================= -->
+
+<div class="section">
+
+    <div class="section-header" onclick="toggle(this)">
+        📋 Nuova Gara
+    </div>
+
+    <div class="section-content">
+
+        <input id="nome" placeholder="Nome Gara">
+
+        <input id="categoria" placeholder="Categoria">
+
+        <input type="date" id="data">
+
+        <input type="number" id="volate" placeholder="Volate">
+
+        <input type="number" id="frecce" placeholder="Frecce">
+
+        <br>
+
+        <button class="green" onclick="creaGara()">
+            Crea
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ================= ARCIERI ================= -->
+
+<div class="section">
+
+    <div class="section-header" onclick="toggle(this)">
+        🏹 Arcieri
+    </div>
+
+    <div class="section-content">
+
+        <input id="arciere" placeholder="Nome Arciere">
+
+        <br>
+
+        <button class="green" onclick="addArciere()">
+            Aggiungi
+        </button>
+
+        <div id="listaArcieri"></div>
+
+    </div>
+
+</div>
+
+<!-- ================= PUNTEGGI ================= -->
+
+<div class="section">
+
+    <div class="section-header" onclick="toggle(this)">
+        🎯 Punteggi
+    </div>
+
+    <div class="section-content">
+
+        <select id="garaSel"></select>
+
+        <div id="punteggi"></div>
+
+    </div>
+
+</div>
+
+<!-- ================= GRAFICO STORICO ================= -->
+
+<div class="section">
+
+    <div class="section-header" onclick="toggle(this)">
+        📊 Storico Arcieri
+    </div>
+
+    <div class="section-content">
+
+        <input
+            type="text"
+            id="searchArciere"
+            placeholder="Cerca arciere..."
+            onkeyup="filtraArcieri()"
+        >
+
+        <div id="listaRicerca"></div>
+
+        <hr>
+
+        <div id="storicoInfo"></div>
+
+        <canvas id="chart"></canvas>
+
+    </div>
+
+</div>
+
+<!-- ================= CLASSIFICHE ================= -->
+
+<div class="section">
+
+    <div class="section-header" onclick="toggle(this)">
+        🏆 Classifiche
+    </div>
+
+    <div class="section-content">
+
+        <select id="categoriaClassifica">
+    <option value="">Tutte le categorie</option>
+</select>
+
+        <button class="blue" onclick="classificaGlobale()">
+            Genera Classifica
+        </button>
+
+        <div id="classifiche"></div>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+
+<div class="modal" id="modal">
+
+    <div class="modal-content" id="modalContent"></div>
+
+</div>
+
+<input type="file" id="file" hidden>
+
+<script>
+
+/* ================= THEME ================= */
+
+function toggleTheme(){
+
+    document.body.classList.toggle("light");
+
+    salvaTema();
+
+    aggiornaBottoneTema();
+}
+
+function salvaTema(){
+
+    localStorage.setItem(
+        "tema",
+        document.body.classList.contains("light")
+        ? "light"
+        : "dark"
+    );
+}
+
+function caricaTema(){
+
+    const tema = localStorage.getItem("tema");
+
+    if(tema === "light"){
+        document.body.classList.add("light");
+    }
+
+    aggiornaBottoneTema();
+}
+
+function aggiornaBottoneTema(){
+
+    const btn = document.getElementById("themeBtn");
+
+    if(document.body.classList.contains("light")){
+        btn.innerHTML = "🌙 Scuro";
+    }else{
+        btn.innerHTML = "☀️ Chiaro";
+    }
+}
+
+/* ================= DATI ================= */
+
+let gare =
+JSON.parse(localStorage.getItem("gare")) || [];
+
+let arcieri =
+JSON.parse(localStorage.getItem("arcieri")) || [];
+
+let attiva = null;
+
+let chart;
+
+/* ================= UI ================= */
+
+function toggle(el){
+
+    el.parentElement.classList.toggle("open");
+}
+
+function salva(){
+
+    localStorage.setItem(
+        "gare",
+        JSON.stringify(gare)
+    );
+
+    localStorage.setItem(
+        "arcieri",
+        JSON.stringify(arcieri)
+    );
+
+    mostra();
+}
+
+/* ================= GARE ================= */
+
+function creaGara(){
+
+    if(
+        !nome.value ||
+        !categoria.value ||
+        !volate.value ||
+        !frecce.value
+    ){
+        alert("Compila tutti i campi");
+        return;
+    }
+
+    gare.push({
+
+    id: Date.now(),
+
+        data:data.value,
+
+        nome:nome.value,
+
+        categoria:categoria.value,
+
+        volate:+volate.value,
+
+        frecce:+frecce.value,
+
+        partecipanti:[],
+
+        risultati:[],
+
+        corrente:0
+    });
+
+    nome.value = "";
+    categoria.value = "";
+    volate.value = "";
+    frecce.value = "";
+
+    salva();
+}
+
+/* ================= ARCIERI ================= */
+
+function addArciere(){
+
+    if(!arciere.value){
+        alert("Inserisci un nome");
+        return;
+    }
+
+    arcieri.push({
+
+        id:Date.now(),
+
+        nome:arciere.value
+    });
+
+    arciere.value = "";
+
+    salva();
+}
+
+function mostra(){
+
+    garaSel.innerHTML =
+    '<option value="">Seleziona Gara</option>' +
+
+    gare.map(g =>
+
+        `<option value="${g.id}">
+            ${g.nome}
+        </option>`
+
+    ).join("");
+
+    listaArcieri.innerHTML =
+
+    arcieri.map(a =>
+
+        `<div class="card">
+            🏹 ${a.nome}
+        </div>`
+
+    ).join("");
+
+    const select = document.getElementById("categoriaClassifica");
+
+const categorie = [...new Set(gare.map(g => g.categoria))];
+
+select.innerHTML =
+'<option value="">Tutte le categorie</option>' +
+categorie.map(c =>
+    `<option value="${c}">${c}</option>`
+).join("");
+
+    mostraRicercaArcieri();
+}
+
+/* ================= RICERCA ARCIERI ================= */
+
+function mostraRicercaArcieri(lista = arcieri){
+
+    const box =
+    document.getElementById("listaRicerca");
+
+    box.innerHTML =
+
+    lista.map(a =>
+
+        `<div class="card"
+            style="
+                cursor:pointer;
+                margin-top:5px;
+            "
+            onclick="graficoStorico(${a.id})"
+        >
+
+            🏹 ${a.nome}
+
+        </div>`
+
+    ).join("");
+}
+
+function filtraArcieri(){
+
+    const testo =
+
+    document
+    .getElementById("searchArciere")
+    .value
+    .toLowerCase();
+
+    const filtrati =
+
+    arcieri.filter(a =>
+
+        a.nome
+        .toLowerCase()
+        .includes(testo)
+    );
+
+    mostraRicercaArcieri(filtrati);
+}
+
+/* ================= SELEZIONE GARA ================= */
+
+garaSel.onchange = ()=>{
+
+    attiva = gare.find(
+        g => g.id == garaSel.value
+    );
+
+    mostraPunteggi();
+};
+
+/* ================= PUNTEGGI ================= */
+
+function mostraPunteggi(){
+
+    if(!attiva){
+        punteggi.innerHTML = "";
+        return;
+    }
+
+    if(attiva.partecipanti.length === 0){
+
+        punteggi.innerHTML =
+
+        arcieri.map(a =>
+
+            `<label>
+                <input
+                    type="checkbox"
+                    value="${a.id}"
+                >
+
+                ${a.nome}
+            </label><br>`
+
+        ).join("")
+
+        +
+
+        `<button class="green" onclick="start()">
+            Start
+        </button>`;
+
+        return;
+    }
+
+    if(attiva.corrente >= attiva.volate){
+
+        punteggi.innerHTML = "🏁 Gara finita";
+
+        return;
+    }
+
+    punteggi.innerHTML =
+
+    `<h3>
+        Volata ${attiva.corrente + 1}
+    </h3>`
+
+    +
+
+    attiva.partecipanti.map(id => {
+
+        const a =
+        arcieri.find(x => x.id == id);
+
+        return `
+
+        <div class="card">
+
+            <strong>${a.nome}</strong>
+
+            <br><br>
+
+            ${
+
+                Array.from({
+                    length:attiva.frecce
+                }).map((_,i)=>
+
+                `<input
+                    type="number"
+                    id="s_${id}_${i}"
+                    min="0"
+                    max="10"
+                    value="0"
+                    style="width:60px"
+                >`
+
+                ).join("")
+
+            }
+
+        </div>`;
+    }).join("")
+
+    +
+
+    `<button class="green" onclick="salvaVolata()">
+        Salva Volata
+    </button>`;
+}
+
+/* ================= START GARA ================= */
+
+function start(){
+
+    const selezionati =
+
+    document.querySelectorAll(
+        "#punteggi input:checked"
+    );
+
+    if(selezionati.length === 0){
+
+        alert("Seleziona almeno un arciere");
+
+        return;
+    }
+
+    selezionati.forEach(c => {
+
+        attiva.partecipanti.push(+c.value);
+
+        attiva.risultati.push({
+
+            arciereId:+c.value,
+
+            punteggi:[]
+        });
+    });
+
+    salva();
+
+    mostraPunteggi();
+}
+
+/* ================= SALVA VOLATA ================= */
+
+function salvaVolata(){
+
+    attiva.partecipanti.forEach(id => {
+
+        let punti = [];
+
+        for(let i=0;i<attiva.frecce;i++){
+
+            punti.push(
+
+                +document.getElementById(
+                    `s_${id}_${i}`
+                ).value || 0
+            );
+        }
+
+        const r = attiva.risultati.find(
+            x => x.arciereId == id
+        );
+
+        r.punteggi.push(punti);
+    });
+
+    attiva.corrente++;
+
+    salva();
+
+    mostraPunteggi();
+}
+
+/* ================= GRAFICO STORICO ================= */
+
+function graficoStorico(arciereId){
+
+    const arciere =
+    arcieri.find(a => a.id == arciereId);
+
+    if(!arciere) return;
+
+    let labels = [];
+    let data = [];
+
+    gare.forEach(g => {
+
+        const risultato =
+        g.risultati.find(
+            r => r.arciereId == arciereId
+        );
+
+        if(risultato){
+
+            const totale =
+            risultato.punteggi
+            .flat()
+            .reduce((s,v)=>s+v,0);
+
+            labels.push(
+                `${g.nome} (${g.data || "N/D"})`
+            );
+
+            data.push(totale);
+        }
+    });
+
+    document.getElementById("storicoInfo").innerHTML = `
+    <div class="card">
+        <h3>🏹 ${arciere.nome}</h3>
+
+        <p>
+            Gare disputate:
+            <strong>${labels.length}</strong>
+        </p>
+
+        <p>
+            Miglior punteggio:
+            <strong>${data.length ? Math.max(...data) : 0}</strong>
+        </p>
+    </div>
+    `;
+
+    if(chart){
+        chart.destroy();
+    }
+
+    chart = new Chart(chartEl,{
+
+        type:'line',
+
+        data:{
+
+            labels,
+
+            datasets:[{
+
+                label:'Punteggio',
+
+                data,
+
+                borderColor:'#3182ce',
+
+                backgroundColor:'rgba(49,130,206,0.2)',
+
+                borderWidth:3,
+
+                fill:true,
+
+                tension:0.3
+            }]
+        },
+
+        options:{
+
+            responsive:true,
+
+            plugins:{
+                legend:{
+                    labels:{
+                        color:getComputedStyle(document.body)
+                            .getPropertyValue('--text')
+                    }
+                }
+            },
+
+            scales:{
+                y:{
+                    beginAtZero:true
+                }
+            }
+        }
+    });
+}
+
+const chartEl =
+document.getElementById("chart");
+
+/* ================= CLASSIFICHE ================= */
+
+function classificaGlobale(){
+
+    const categoriaSelezionata =
+        document.getElementById("categoriaClassifica").value;
+
+    let ranking = [];
+
+    gare.forEach(g => {
+
+        // 🔥 FILTRO CATEGORIA
+        if(categoriaSelezionata && g.categoria !== categoriaSelezionata){
+            return;
+        }
+
+        g.risultati.forEach(r => {
+
+            const nome = arcieri.find(
+                a => a.id == r.arciereId
+            )?.nome;
+
+            const totale =
+                r.punteggi
+                .flat()
+                .reduce((s,v)=>s+v,0);
+
+            ranking.push({
+    nome,
+    totale,
+    gara: g.nome,
+    categoria: g.categoria,
+    data: g.data
+});
+        });
+    });
+
+    ranking.sort((a,b) => b.totale - a.totale);
+
+    const html = ranking.map((r,i) =>
+
+    `<div class="card">
+        <strong>${i+1}. ${r.nome}</strong><br>
+        🎯 ${r.totale} punti<br>
+        🏹 ${r.gara}<br>
+        📅 ${r.data || "N/D"}<br>
+        📂 ${r.categoria}
+    </div>`
+
+).join("");
+
+    document.getElementById("classifiche").innerHTML =
+        html || `<div class="card">Nessun risultato</div>`;
+}
+
+/* ================= EXPORT / IMPORT ================= */
+
+function esporta(){
+
+    const dati = {
+
+        gare,
+        arcieri
+    };
+
+    const blob = new Blob(
+        [JSON.stringify(dati)],
+        {type:"application/json"}
+    );
+
+    const a =
+    document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+
+    a.download = "gestione_arcieri.json";
+
+    a.click();
+}
+
+function importa(){
+
+    file.click();
+}
+
+file.onchange = e => {
+
+    const reader = new FileReader();
+
+    reader.onload = ev => {
+
+        const dati =
+        JSON.parse(ev.target.result);
+
+        gare = dati.gare || [];
+        arcieri = dati.arcieri || [];
+
+        salva();
+
+        mostra();
+    };
+
+    reader.readAsText(
+        e.target.files[0]
+    );
+};
+
+/* ================= RESET ================= */
+
+function resetDati(){
+
+    if(confirm("Cancellare tutti i dati?")){
+
+        localStorage.clear();
+
+        location.reload();
+    }
+}
+
+/* ================= INIT ================= */
+
+caricaTema();
+
+mostra();
+
+</script>
+
+</body>
+</html>
